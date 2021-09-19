@@ -44,7 +44,7 @@ __Warning__ : these commands have no effect if no custom transform orientation i
 
 ## Changelog
 
-#### V1.0.0
+### V1.0.0
 
 First stable release of the add-on.
 
