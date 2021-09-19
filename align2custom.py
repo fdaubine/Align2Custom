@@ -18,6 +18,10 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+# <pep8 compliant>
+
+# Contributed to by fdaubine
+
 import bpy
 import math
 import mathutils as mu
@@ -28,12 +32,12 @@ bl_info = {
     "description": "Set of commands to align the 3D view to the axes of "
                    "the active custom orientation",
     "author": "Francois Daubine",
-    "version": (1, 0),
+    "version": (1, 0, 0),
     "blender": (2, 80, 0),
     "location": "View3D > View > Align View",
     "warning": "",
-    "doc_url": "",        # > Link to the doc page of the script (mandatory).
-    "tracker_url": "",    # > Link to the bug tracker (optional).
+    "doc_url": "https://www.github.com/fdaubine/Align2Custom",
+    "tracker_url": "https://www.github.com/fdaubine/Align2Custom",
     "support": "COMMUNITY",
     "category": "3D View",
 }
