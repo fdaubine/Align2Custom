@@ -23,7 +23,7 @@ Moreover, these items can be accessed by keyboard shortcuts as follows :
  - Right View  : `ALT` + `NUMPAD 3`
  - Left View   : `ALT` + `CTRL` + `NUMPAD 3`
 
-__Warning__ : these commands have no effect if no custom transform orientation is active.
+__Warning__ : these commands have no effect if no _custom transform orientation_ is active.
 
 
 ## Installation
@@ -39,6 +39,7 @@ __Warning__ : these commands have no effect if no custom transform orientation i
 
  - Smooth transition between starting and ending orientations.
  - Ask the user to select a _custom transform orientation_ if none is selected when calling a command of the add-on
+ - Align the 3D View to the cursor axes
  - Any further idea
 
 
