@@ -25,6 +25,9 @@ Moreover, these items can be accessed by keyboard shortcuts as follows :
 
 __Warning__ : these commands have no effect if no _custom transform orientation_ is active.
 
+A quick demo :
+![alt text](./doc_img/demo_a2c.gif "A2C demo")
+
 
 ## Installation
 
