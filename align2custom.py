@@ -43,6 +43,24 @@ bl_info = {
 }
 
 
+# ## Math functions section ###################################################
+def s_curve_range(nb_samples):
+  """
+  Function that returns a list of range values (from 0.0 to 1.0) spaced
+  according to a S-curve function. Useful for smooth interpolation.
+  
+  Parameters :
+   - nb_samples [in] : number of range values to generate (greater than 0)
+  """
+  
+  assert nb_samples > 0
+  
+  rng = [elt/nb_samples for elt in range(nb_samples+1)]
+  rng = [(1.0 + math.sin((x - 0.5) * math.pi))/2.0 for x in rng]
+
+  return rng
+
+
 # ## Operators section ########################################################
 class VIEW3D_OT_align_2_custom(bpy.types.Operator):
     """
@@ -263,3 +281,4 @@ def unregister():
 # ## MAIN test section ########################################################
 if __name__ == "__main__":
     register()
+
