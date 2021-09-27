@@ -25,6 +25,8 @@
 import bpy
 import math
 import mathutils as mu
+import threading as thd
+import time
 
 
 bl_info = {
@@ -32,7 +34,7 @@ bl_info = {
     "description": "Set of commands to align the 3D view to the axes of "
                    "the active custom orientation",
     "author": "Francois Daubine",
-    "version": (1, 0, 0),
+    "version": (1, 0, 1),
     "blender": (2, 80, 0),
     "location": "View3D > View > Align View",
     "warning": "",
@@ -45,6 +47,7 @@ bl_info = {
 
 # ## Global data ##############################################################
 gl_addon_keymaps = []       # Keymap collection
+gl_token_lock = False       # Locking token while rotating 3D View
 
 
 # ## Math functions section ###################################################
@@ -56,9 +59,9 @@ def s_curve_range(nb_samples):
   Parameters :
    - nb_samples [in] : number of range values to generate (greater than 0)
   """
-  
+
   assert nb_samples > 0
-  
+
   rng = [elt/nb_samples for elt in range(nb_samples+1)]
   rng = [(1.0 + math.sin((x - 0.5) * math.pi))/2.0 for x in rng]
 
@@ -75,6 +78,27 @@ class VIEW3D_OT_align_2_custom(bpy.types.Operator):
     bl_label = "Align to custom orientation base class"
     bl_options = {'REGISTER', 'UNDO'}
 
+    NB_FRAME_MAX = 12
+    FRAME_DELAY = 0.02
+
+
+    @staticmethod
+    def rotate_view(space, orient_steps):
+        """
+        Rotate the 3D view smoothly according to a quaternions poped out of the
+        'orient_steps' list parameter
+        """
+
+        global gl_token_lock
+
+        if space and len(orient_steps) > 0:
+            for quat in orient_steps:
+                space.region_3d.view_rotation = quat
+                time.sleep(VIEW3D_OT_align_2_custom.FRAME_DELAY)
+
+        gl_token_lock = False
+
+
     def set_orientation(self, context, rot_matrix=mu.Matrix.Identity(3)):
         """
         Set the orientation of the 3D View in which the operator is called,
@@ -82,14 +106,34 @@ class VIEW3D_OT_align_2_custom(bpy.types.Operator):
         rotation matrix passed in argument
         """
 
+        global gl_token_lock
+
         scene = context.window.scene
         space = context.space_data
         co = scene.transform_orientation_slots[0].custom_orientation
-        if co and (space.type == 'VIEW_3D'):
+        if (not gl_token_lock) and co and (space.type == 'VIEW_3D'):
             view_orientation = co.matrix @ rot_matrix
 
+            initial_quat = space.region_3d.view_rotation
+            final_quat = view_orientation.to_quaternion()
+            diff_quat = final_quat.rotation_difference(initial_quat)
+            axis, angle = diff_quat.to_axis_angle()
+
+            nb_frames = max(1, int(VIEW3D_OT_align_2_custom.NB_FRAME_MAX *
+                            angle / math.pi))
+
+            frames_range = s_curve_range(nb_frames)
+            view_orientations = [initial_quat.slerp(final_quat, factor) for
+                                 factor in frames_range]
+
             space.region_3d.view_perspective = 'ORTHO'
-            space.region_3d.view_rotation = view_orientation.to_quaternion()
+
+            rotation_job = thd.Thread(
+                                target=VIEW3D_OT_align_2_custom.rotate_view,
+                                args=(space, view_orientations))
+
+            gl_token_lock = True
+            rotation_job.start()
 
 
 class VIEW3D_OT_a2c_top(VIEW3D_OT_align_2_custom):
