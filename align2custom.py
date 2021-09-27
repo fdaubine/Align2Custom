@@ -43,6 +43,10 @@ bl_info = {
 }
 
 
+# ## Global data ##############################################################
+gl_addon_keymaps = []       # Keymap collection
+
+
 # ## Math functions section ###################################################
 def s_curve_range(nb_samples):
   """
@@ -213,10 +217,6 @@ def a2c_menu_func(self, context):
     self.layout.menu(VIEW3D_MT_align2custom.bl_idname)
 
 
-# ## Keymap collection ########################################################
-addon_keymaps = []
-
-
 # ## Blender registration section #############################################
 def register():
     bpy.utils.register_class(VIEW3D_MT_align2custom)
@@ -238,33 +238,33 @@ def register():
         kmi = km.keymap_items.new(VIEW3D_OT_a2c_top.bl_idname,
                                   'NUMPAD_7', 'PRESS',
                                   alt=True, ctrl=False)
-        addon_keymaps.append((km, kmi))
+        gl_addon_keymaps.append((km, kmi))
         kmi = km.keymap_items.new(VIEW3D_OT_a2c_bottom.bl_idname,
                                   'NUMPAD_7', 'PRESS',
                                   alt=True, ctrl=True)
-        addon_keymaps.append((km, kmi))
+        gl_addon_keymaps.append((km, kmi))
         kmi = km.keymap_items.new(VIEW3D_OT_a2c_front.bl_idname,
                                   'NUMPAD_1', 'PRESS',
                                   alt=True, ctrl=False)
-        addon_keymaps.append((km, kmi))
+        gl_addon_keymaps.append((km, kmi))
         kmi = km.keymap_items.new(VIEW3D_OT_a2c_back.bl_idname,
                                   'NUMPAD_1', 'PRESS',
                                   alt=True, ctrl=True)
-        addon_keymaps.append((km, kmi))
+        gl_addon_keymaps.append((km, kmi))
         kmi = km.keymap_items.new(VIEW3D_OT_a2c_right.bl_idname,
                                   'NUMPAD_3', 'PRESS',
                                   alt=True, ctrl=False)
-        addon_keymaps.append((km, kmi))
+        gl_addon_keymaps.append((km, kmi))
         kmi = km.keymap_items.new(VIEW3D_OT_a2c_left.bl_idname,
                                   'NUMPAD_3', 'PRESS',
                                   alt=True, ctrl=True)
-        addon_keymaps.append((km, kmi))
+        gl_addon_keymaps.append((km, kmi))
 
 
 def unregister():
-    for km, kmi in addon_keymaps:
+    for km, kmi in gl_addon_keymaps:
         km.keymap_items.remove(kmi)
-    addon_keymaps.clear()
+    gl_addon_keymaps.clear()
 
     bpy.types.VIEW3D_MT_view_align.remove(a2c_menu_func)
 
