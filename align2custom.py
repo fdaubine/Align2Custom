@@ -52,20 +52,20 @@ gl_token_lock = False       # Locking token while rotating 3D View
 
 # ## Math functions section ###################################################
 def s_curve_range(nb_samples):
-  """
-  Function that returns a list of range values (from 0.0 to 1.0) spaced
-  according to a S-curve function. Useful for smooth interpolation.
-  
-  Parameters :
-   - nb_samples [in] : number of range values to generate (greater than 0)
-  """
+    """
+    Function that returns a list of range values (from 0.0 to 1.0) spaced
+    according to a S-curve function. Useful for smooth interpolation.
 
-  assert nb_samples > 0
+    Parameters :
+     - nb_samples [in] : number of range values to generate (greater than 0)
+    """
 
-  rng = [elt/nb_samples for elt in range(nb_samples+1)]
-  rng = [(1.0 + math.sin((x - 0.5) * math.pi))/2.0 for x in rng]
+    assert nb_samples > 0
 
-  return rng
+    rng = [elt/nb_samples for elt in range(nb_samples+1)]
+    rng = [(1.0 + math.sin((x - 0.5) * math.pi))/2.0 for x in rng]
+
+    return rng
 
 
 # ## Operators section ########################################################
@@ -81,11 +81,10 @@ class VIEW3D_OT_align_2_custom(bpy.types.Operator):
     NB_FRAME_MAX = 12
     FRAME_DELAY = 0.02
 
-
     @staticmethod
     def rotate_view(space, orient_steps):
         """
-        Rotate the 3D view smoothly according to a quaternions poped out of the
+        Rotate the 3D view smoothly along the intermediate quaternions of the
         'orient_steps' list parameter
         """
 
@@ -98,12 +97,16 @@ class VIEW3D_OT_align_2_custom(bpy.types.Operator):
 
         gl_token_lock = False
 
-
     def set_orientation(self, context, rot_matrix=mu.Matrix.Identity(3)):
         """
         Set the orientation of the 3D View in which the operator is called,
         as a combination of the active custom orientation matrix and the
-        rotation matrix passed in argument
+        rotation matrix passed in argument.
+
+        This function computes a set of intermediate orientations between
+        the current 3D view orientation and the custom orientation, and
+        next gives them to a thread which rotate the 3D view along those
+        intermediate orientations (Smooth transition).
         """
 
         global gl_token_lock
@@ -119,9 +122,14 @@ class VIEW3D_OT_align_2_custom(bpy.types.Operator):
             diff_quat = final_quat.rotation_difference(initial_quat)
             axis, angle = diff_quat.to_axis_angle()
 
+            # Compute the number of intermediate orientations according to
+            # the angle difference between starting and ending orientations
+            # (the smaller the angle, the fewer samples)
             nb_frames = max(1, int(VIEW3D_OT_align_2_custom.NB_FRAME_MAX *
                             angle / math.pi))
 
+            # Sample the intermediate orientations along a S-curve (smooth
+            # transition), and compute the associated quaternions
             frames_range = s_curve_range(nb_frames)
             view_orientations = [initial_quat.slerp(final_quat, factor) for
                                  factor in frames_range]
