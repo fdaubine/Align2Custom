@@ -30,9 +30,9 @@ import time
 
 
 bl_info = {
-    "name": "Align view to custom orientation",
+    "name": "Align view to custom orientation or 3D cursor",
     "description": "Set of commands to align the 3D view to the axes of "
-                   "the active custom orientation",
+                   "the active custom transform orientation or the 3D cursor.",
     "author": "Francois Daubine",
     "version": (1, 0, 1),
     "blender": (2, 80, 0),
@@ -71,12 +71,17 @@ def s_curve_range(nb_samples):
 # ## Operator section #########################################################
 class VIEW3D_OT_a2c(bpy.types.Operator):
     """
-    Align 3D View to active custom transform orientation
+    Align 3D View to 3D cursor or active custom transform orientation
     """
 
     bl_idname = "view3d.a2c"
-    bl_label = "Align to custom transform orientation"
+    bl_label = "Align to 3D cursor or custom transform orientation"
     bl_options = {'REGISTER', 'UNDO'}
+
+    ALIGN_MODE_ITEMS = [
+        ("CUSTOM", "Align to custom orientation", "", 1),
+        ("CURSOR", "Align to cursor orientation", "", 2),
+    ]
 
     VIEWPOINT_ITEMS = [
         ("TOP", "Top view", "", 1),
@@ -87,12 +92,15 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
         ("LEFT", "Left view", "", 6),
     ]
 
+    prop_align_mode: bpy.props.EnumProperty(items=ALIGN_MODE_ITEMS,
+                                            name="Align mode",
+                                            default="CUSTOM")
     prop_viewpoint: bpy.props.EnumProperty(items=VIEWPOINT_ITEMS,
                                            name="Point of view",
                                            default="TOP")
 
-    NB_FRAME_MAX = 12
-    FRAME_DELAY = 0.02
+    NB_FRAME_MAX = 9
+    FRAME_DELAY = 0.03
 
     @staticmethod
     def rotate_view(space, orient_steps):
@@ -127,29 +135,35 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
         scene = context.window.scene
         space = context.space_data
 
-        # Compute the rotation matrix according to the desired point of view
-        if self.prop_viewpoint == "BOTTOM":
-            rot_matrix = mu.Matrix.Rotation(math.radians(180.0), 3, 'X')
-        elif self.prop_viewpoint == "FRONT":
-            rot_matrix = mu.Matrix.Rotation(math.radians(90.0), 3, 'X')
-        elif self.prop_viewpoint == "BACK":
-            rot_matrix = mu.Matrix.Rotation(math.radians(90.0), 3, 'X')\
-                       @ mu.Matrix.Rotation(math.radians(180.0), 3, 'Y')
-        elif self.prop_viewpoint == "RIGHT":
-            rot_matrix = mu.Matrix.Rotation(math.radians(90.0), 3, 'X')\
-                       @ mu.Matrix.Rotation(math.radians(90.0), 3, 'Y')
-        elif self.prop_viewpoint == "LEFT":
-            rot_matrix = mu.Matrix.Rotation(math.radians(90.0), 3, 'X')\
-                       @ mu.Matrix.Rotation(math.radians(-90.0), 3, 'Y')
-        else:   # TOP (DEFAULT)
-            rot_matrix = mu.Matrix.Identity(3)
-
         co = scene.transform_orientation_slots[0].custom_orientation
-        if (not gl_token_lock) and co and (space.type == 'VIEW_3D'):
-            view_orientation = co.matrix @ rot_matrix
+        if (not gl_token_lock) and \
+           (space.type == 'VIEW_3D') and \
+           ((self.prop_align_mode == 'CURSOR') or co):
+
+            # Compute the rotation matrix according to the desired viewpoint
+            if self.prop_viewpoint == "BOTTOM":
+                rot_matrix = mu.Matrix.Rotation(math.radians(180.0), 3, 'X')
+            elif self.prop_viewpoint == "FRONT":
+                rot_matrix = mu.Matrix.Rotation(math.radians(90.0), 3, 'X')
+            elif self.prop_viewpoint == "BACK":
+                rot_matrix = mu.Matrix.Rotation(math.radians(90.0), 3, 'X')\
+                           @ mu.Matrix.Rotation(math.radians(180.0), 3, 'Y')
+            elif self.prop_viewpoint == "RIGHT":
+                rot_matrix = mu.Matrix.Rotation(math.radians(90.0), 3, 'X')\
+                           @ mu.Matrix.Rotation(math.radians(90.0), 3, 'Y')
+            elif self.prop_viewpoint == "LEFT":
+                rot_matrix = mu.Matrix.Rotation(math.radians(90.0), 3, 'X')\
+                           @ mu.Matrix.Rotation(math.radians(-90.0), 3, 'Y')
+            else:   # TOP (DEFAULT)
+                rot_matrix = mu.Matrix.Identity(3)
+
+            if self.prop_align_mode == 'CURSOR':
+                new_orientation = scene.cursor.matrix.to_3x3() @ rot_matrix
+            else:
+                new_orientation = co.matrix @ rot_matrix
 
             initial_quat = space.region_3d.view_rotation
-            final_quat = view_orientation.to_quaternion()
+            final_quat = new_orientation.to_quaternion()
             diff_quat = final_quat.rotation_difference(initial_quat)
             axis, angle = diff_quat.to_axis_angle()
 
@@ -178,11 +192,56 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
 
 
 # ## Menus section ############################################################
-class VIEW3D_MT_align2custom(bpy.types.Menu):
+class VIEW3D_MT_a2c(bpy.types.Menu):
+    """
+    Submenu 'Align View ...' base class
+    """
+
+    bl_idname = "VIEW3D_MT_a2c"
+    bl_label = "Align View base class"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def draw(self, context):
+        self.create_items(context)
+
+    def create_items(self, context, align_mode='CUSTOM'):
+        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
+                                             text="Top")
+        operator_prop.prop_viewpoint = 'TOP'
+        operator_prop.prop_align_mode = align_mode
+        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
+                                             text="Bottom")
+        operator_prop.prop_viewpoint = 'BOTTOM'
+        operator_prop.prop_align_mode = align_mode
+
+        self.layout.separator()
+
+        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
+                                             text="Front")
+        operator_prop.prop_viewpoint = 'FRONT'
+        operator_prop.prop_align_mode = align_mode
+        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
+                                             text="Back")
+        operator_prop.prop_viewpoint = 'BACK'
+        operator_prop.prop_align_mode = align_mode
+
+        self.layout.separator()
+
+        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
+                                             text="Right")
+        operator_prop.prop_viewpoint = 'RIGHT'
+        operator_prop.prop_align_mode = align_mode
+        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
+                                             text="Left")
+        operator_prop.prop_viewpoint = 'LEFT'
+        operator_prop.prop_align_mode = align_mode
+
+
+class VIEW3D_MT_align2custom(VIEW3D_MT_a2c):
     """
     Submenu 'Align View to Custom' : offers to select one of the 6 possible
     orientations (Top, Bottom, Front, Back, Right, Left) according to the
-    selected custom axes
+    selected custom transform orientation axes
     """
 
     bl_idname = "VIEW3D_MT_align2custom"
@@ -190,46 +249,43 @@ class VIEW3D_MT_align2custom(bpy.types.Menu):
     bl_options = {'REGISTER', 'UNDO'}
 
     def draw(self, context):
-        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
-                                             text="Top")
-        operator_prop.prop_viewpoint = "TOP"
-        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
-                                             text="Bottom")
-        operator_prop.prop_viewpoint = "BOTTOM"
+        self.create_items(context, 'CUSTOM')
 
-        self.layout.separator()
 
-        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
-                                             text="Front")
-        operator_prop.prop_viewpoint = "FRONT"
-        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
-                                             text="Back")
-        operator_prop.prop_viewpoint = "BACK"
+class VIEW3D_MT_align2cursor(VIEW3D_MT_a2c):
+    """
+    Submenu 'Align View to Cursor' : offers to select one of the 6 possible
+    orientations (Top, Bottom, Front, Back, Right, Left) according to the
+    3D cursor axes
+    """
 
-        self.layout.separator()
+    bl_idname = "VIEW3D_MT_align2cursor"
+    bl_label = "Align View to Cursor"
+    bl_options = {'REGISTER', 'UNDO'}
 
-        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
-                                             text="Right")
-        operator_prop.prop_viewpoint = "RIGHT"
-        operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
-                                             text="Left")
-        operator_prop.prop_viewpoint = "LEFT"
+    def draw(self, context):
+        self.create_items(context, 'CURSOR')
 
 
 def a2c_menu_func(self, context):
     """
-    Append the submenu 'Align to custom orientation' to the menu
-    'View3D > View > Align View'
+    Append the submenus 'Align View to Custom' and 'Align View to Cursor' to
+    the menu 'View3D > View > Align View'
     """
 
     self.layout.separator()
     self.layout.menu(VIEW3D_MT_align2custom.bl_idname)
+    self.layout.menu(VIEW3D_MT_align2cursor.bl_idname)
 
 
 # ## Blender registration section #############################################
 def register():
-    bpy.utils.register_class(VIEW3D_MT_align2custom)
+    global gl_addon_keymaps
+
     bpy.utils.register_class(VIEW3D_OT_a2c)
+    bpy.utils.register_class(VIEW3D_MT_a2c)
+    bpy.utils.register_class(VIEW3D_MT_align2custom)
+    bpy.utils.register_class(VIEW3D_MT_align2cursor)
 
     bpy.types.VIEW3D_MT_view_align.append(a2c_menu_func)
 
@@ -238,47 +294,48 @@ def register():
             name='3D View',
             space_type='VIEW_3D')
 
-        kmi = km.keymap_items.new(VIEW3D_OT_a2c.bl_idname,
-                                  'NUMPAD_7', 'PRESS',
-                                  alt=True, ctrl=False)
-        kmi.properties.prop_viewpoint = "TOP"
-        gl_addon_keymaps.append((km, kmi))
-        kmi = km.keymap_items.new(VIEW3D_OT_a2c.bl_idname,
-                                  'NUMPAD_7', 'PRESS',
-                                  alt=True, ctrl=True)
-        kmi.properties.prop_viewpoint = "BOTTOM"
-        gl_addon_keymaps.append((km, kmi))
-        kmi = km.keymap_items.new(VIEW3D_OT_a2c.bl_idname,
-                                  'NUMPAD_1', 'PRESS',
-                                  alt=True, ctrl=False)
-        kmi.properties.prop_viewpoint = "FRONT"
-        gl_addon_keymaps.append((km, kmi))
-        kmi = km.keymap_items.new(VIEW3D_OT_a2c.bl_idname,
-                                  'NUMPAD_1', 'PRESS',
-                                  alt=True, ctrl=True)
-        kmi.properties.prop_viewpoint = "BACK"
-        gl_addon_keymaps.append((km, kmi))
-        kmi = km.keymap_items.new(VIEW3D_OT_a2c.bl_idname,
-                                  'NUMPAD_3', 'PRESS',
-                                  alt=True, ctrl=False)
-        kmi.properties.prop_viewpoint = "RIGHT"
-        gl_addon_keymaps.append((km, kmi))
-        kmi = km.keymap_items.new(VIEW3D_OT_a2c.bl_idname,
-                                  'NUMPAD_3', 'PRESS',
-                                  alt=True, ctrl=True)
-        kmi.properties.prop_viewpoint = "LEFT"
-        gl_addon_keymaps.append((km, kmi))
+        def set_km_item(km, numpad, ctrl, viewpoint, align_mode):
+            global gl_addon_keymaps
+
+            if km:
+                str_numpad = 'NUMPAD_{}'.format(numpad)
+                kmi = km.keymap_items.new(VIEW3D_OT_a2c.bl_idname,
+                                          str_numpad, 'PRESS',
+                                          alt=True, ctrl=ctrl)
+                kmi.properties.prop_viewpoint = viewpoint
+                kmi.properties.prop_align_mode = align_mode
+                gl_addon_keymaps.append((km, kmi))
+
+        # Shortcuts for align to custom orientation operators
+        set_km_item(km, '7', False, 'TOP', 'CUSTOM')
+        set_km_item(km, '7', True, 'BOTTOM', 'CUSTOM')
+        set_km_item(km, '1', False, 'FRONT', 'CUSTOM')
+        set_km_item(km, '1', True, 'BACK', 'CUSTOM')
+        set_km_item(km, '3', False, 'RIGHT', 'CUSTOM')
+        set_km_item(km, '3', True, 'LEFT', 'CUSTOM')
+
+        # Shortcuts for align to 3D cursor operators
+        set_km_item(km, '8', False, 'TOP', 'CURSOR')
+        set_km_item(km, '8', True, 'BOTTOM', 'CURSOR')
+        set_km_item(km, '5', False, 'FRONT', 'CURSOR')
+        set_km_item(km, '5', True, 'BACK', 'CURSOR')
+        set_km_item(km, '6', False, 'RIGHT', 'CURSOR')
+        set_km_item(km, '6', True, 'LEFT', 'CURSOR')
 
 
 def unregister():
+    global gl_addon_keymaps
+
     for km, kmi in gl_addon_keymaps:
         km.keymap_items.remove(kmi)
     gl_addon_keymaps.clear()
 
     bpy.types.VIEW3D_MT_view_align.remove(a2c_menu_func)
 
-    bpy.utils.unregister_class(VIEW3D_OT_a2c)
+    bpy.utils.unregister_class(VIEW3D_MT_align2cursor)
     bpy.utils.unregister_class(VIEW3D_MT_align2custom)
+    bpy.utils.unregister_class(VIEW3D_MT_a2c)
+    bpy.utils.unregister_class(VIEW3D_OT_a2c)
 
 
 # ## MAIN test section ########################################################
