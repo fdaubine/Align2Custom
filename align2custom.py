@@ -51,21 +51,21 @@ gl_token_lock = False       # Locking token while rotating 3D View
 
 
 # ## Math functions section ###################################################
-def s_curve_range(nb_samples):
+def s_curve(x):
     """
-    Function that returns a list of range values (from 0.0 to 1.0) spaced
-    according to a S-curve function. Useful for smooth interpolation.
+    Function that returns the transformation of a linear value by a s-curve
+    function.
 
-    Parameters :
-     - nb_samples [in] : number of range values to generate (greater than 0)
+    Parameter :
+     - x [in] : float value [0.0, 1.0]
+
+    Return value : float value
     """
 
-    assert nb_samples > 0
+    assert (x >= 0.0) and (x <= 1.0), ("Overflow error : argument 'x' should "
+                                       "be in the range [0, 1]")
 
-    rng = [elt/nb_samples for elt in range(nb_samples+1)]
-    rng = [(1.0 + math.sin((x - 0.5) * math.pi))/2.0 for x in rng]
-
-    return rng
+    return (1.0 + math.sin((x - 0.5) * math.pi))/2.0
 
 
 # ## Operator section #########################################################
@@ -99,35 +99,51 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
                                            name="Point of view",
                                            default="TOP")
 
-    NB_FRAME_MAX = 9
-    FRAME_DELAY = 0.03
+    SMOOTH_ROT_STEP = 0.02
+    SMOOTH_ROT_DURATION = 0.24
 
     @staticmethod
-    def rotate_view(space, orient_steps):
+    def smooth_rotate(space, quat_begin, quat_end):
         """
-        Rotate the 3D view smoothly along the intermediate quaternions of the
-        'orient_steps' list parameter
+        Rotate the 3D view smoothly between the quaternions 'quat_begin' and
+        'quat_end'
         """
 
         global gl_token_lock
 
-        if space and len(orient_steps) > 0:
-            for quat in orient_steps:
-                space.region_3d.view_rotation = quat
-                time.sleep(VIEW3D_OT_a2c.FRAME_DELAY)
+        if space:
+            # Calculation of the rotation angle which is used to compute the
+            # smooth rotation duration
+            diff_quat = quat_end.rotation_difference(quat_begin)
+            axis, angle = diff_quat.to_axis_angle()
+            duration = abs(VIEW3D_OT_a2c.SMOOTH_ROT_DURATION * angle / math.pi)
+
+            start_time = time.time()
+            current_time = start_time
+
+            while current_time <= start_time + duration:
+                if duration == 0.0:
+                    factor = 1.0
+                else:
+                    factor = s_curve((current_time - start_time) / duration)
+                orientation = quat_begin.slerp(quat_end, factor)
+                space.region_3d.view_rotation = orientation
+
+                time.sleep(VIEW3D_OT_a2c.SMOOTH_ROT_STEP)
+                current_time = time.time()
+
+            space.region_3d.view_rotation = quat_end
 
         gl_token_lock = False
 
     def execute(self, context):
         """
         Set the orientation of the 3D View in which the operator is called,
-        as a combination of the active custom orientation matrix and the
-        rotation matrix passed in argument.
+        as a combination of the 3D cursor matrix or the active custom transform
+        orientation matrix, and the rotation matrix passed in argument.
 
-        This function computes a set of intermediate orientations between
-        the current 3D view orientation and the custom orientation, and
-        next gives them to a thread which rotate the 3D view along those
-        intermediate orientations (Smooth transition).
+        The rotation transition depends on the parameter selected in the addon
+        preferences UI. The transition can be instantaneous or smooth.
         """
 
         global gl_token_lock
@@ -164,26 +180,12 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
 
             initial_quat = space.region_3d.view_rotation
             final_quat = new_orientation.to_quaternion()
-            diff_quat = final_quat.rotation_difference(initial_quat)
-            axis, angle = diff_quat.to_axis_angle()
-
-            # Compute the number of intermediate orientations according to
-            # the angle difference between starting and ending orientations
-            # (the smaller the angle, the fewer samples)
-            nb_frames = max(1, int(VIEW3D_OT_a2c.NB_FRAME_MAX *
-                            angle / math.pi))
-
-            # Sample the intermediate orientations along a S-curve (smooth
-            # transition), and compute the associated quaternions
-            frames_range = s_curve_range(nb_frames)
-            view_orientations = [initial_quat.slerp(final_quat, factor) for
-                                 factor in frames_range]
 
             space.region_3d.view_perspective = 'ORTHO'
 
             rotation_job = thd.Thread(
-                                target=VIEW3D_OT_a2c.rotate_view,
-                                args=(space, view_orientations))
+                                target=VIEW3D_OT_a2c.smooth_rotate,
+                                args=(space, initial_quat, final_quat))
 
             gl_token_lock = True
             rotation_job.start()
