@@ -68,6 +68,22 @@ def s_curve(x):
     return (1.0 + math.sin((x - 0.5) * math.pi))/2.0
 
 
+# ## Preferences section ######################################################
+class A2C_Preferences(bpy.types.AddonPreferences):
+    """
+    Addon panel of the 'Preferences...' interface 
+    """
+
+    bl_idname = __name__
+
+    pref_smooth: bpy.props.BoolProperty(name="Smooth rotation",
+                                        default=True,
+                                        )
+
+    def draw(self, context):
+        self.layout.prop(self, "pref_smooth")
+
+
 # ## Operator section #########################################################
 class VIEW3D_OT_a2c(bpy.types.Operator):
     """
@@ -147,6 +163,9 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
         """
 
         global gl_token_lock
+        
+        # Get the addon preferences
+        prefs = context.preferences.addons[__name__].preferences
 
         scene = context.window.scene
         space = context.space_data
@@ -178,17 +197,20 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
             else:
                 new_orientation = co.matrix @ rot_matrix
 
-            initial_quat = space.region_3d.view_rotation
             final_quat = new_orientation.to_quaternion()
 
             space.region_3d.view_perspective = 'ORTHO'
 
-            rotation_job = thd.Thread(
-                                target=VIEW3D_OT_a2c.smooth_rotate,
-                                args=(space, initial_quat, final_quat))
+            if prefs.pref_smooth:
+                initial_quat = space.region_3d.view_rotation
+                rotation_job = thd.Thread(
+                                    target=VIEW3D_OT_a2c.smooth_rotate,
+                                    args=(space, initial_quat, final_quat))
 
-            gl_token_lock = True
-            rotation_job.start()
+                gl_token_lock = True
+                rotation_job.start()
+            else:
+                space.region_3d.view_rotation = final_quat
 
         return {'FINISHED'}
 
@@ -284,6 +306,7 @@ def a2c_menu_func(self, context):
 def register():
     global gl_addon_keymaps
 
+    bpy.utils.register_class(A2C_Preferences)
     bpy.utils.register_class(VIEW3D_OT_a2c)
     bpy.utils.register_class(VIEW3D_MT_a2c)
     bpy.utils.register_class(VIEW3D_MT_align2custom)
@@ -338,6 +361,7 @@ def unregister():
     bpy.utils.unregister_class(VIEW3D_MT_align2custom)
     bpy.utils.unregister_class(VIEW3D_MT_a2c)
     bpy.utils.unregister_class(VIEW3D_OT_a2c)
+    bpy.utils.unregister_class(A2C_Preferences)
 
 
 # ## MAIN test section ########################################################
