@@ -34,7 +34,7 @@ bl_info = {
     "description": "Set of commands to align the 3D view to the axes of "
                    "the active custom transform orientation or the 3D cursor.",
     "author": "Francois Daubine",
-    "version": (1, 0, 1),
+    "version": (2, 0, 0),
     "blender": (2, 80, 0),
     "location": "View3D > View > Align View",
     "warning": "",
@@ -71,7 +71,7 @@ def s_curve(x):
 # ## Preferences section ######################################################
 class A2C_Preferences(bpy.types.AddonPreferences):
     """
-    Addon panel of the 'Preferences...' interface 
+    Addon panel of the 'Preferences...' interface
     """
 
     bl_idname = __name__
@@ -163,7 +163,7 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
         """
 
         global gl_token_lock
-        
+
         # Get the addon preferences
         prefs = context.preferences.addons[__name__].preferences
 
@@ -213,6 +213,61 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
                 space.region_3d.view_rotation = final_quat
 
         return {'FINISHED'}
+
+
+class VIEW3D_OT_switch_tool(bpy.types.Operator):
+    """
+    Switch between current and 'Cursor' tools in the 3D View, whatever the
+    current mode
+
+    A warning message is dispayed if the last selected tool is unknown, if
+    the context mode has changed, or if the switch back to the last selected
+    tool doesn't occur before a specific timeout.
+    """
+
+    bl_idname = "view3d.switch_tool"
+    bl_label = "Swap between current and 'Cursor' tools in 3D View"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    TIMEOUT = 30.0
+    last_switch_time = 0.0
+    last_switch_mode = ''
+    last_selected_tool = ''
+
+    def execute(self, context):
+        ret = {'FINISHED'}
+        if context.space_data.type == 'VIEW_3D':
+            tools = context.workspace.tools
+            selected_tool = tools.from_space_view3d_mode(context.mode)
+            buff_last_selected_tool = VIEW3D_OT_switch_tool.last_selected_tool
+
+            if selected_tool.idname != "builtin.cursor":
+                VIEW3D_OT_switch_tool.last_selected_tool = selected_tool.idname
+                VIEW3D_OT_switch_tool.last_switch_mode = context.mode
+                VIEW3D_OT_switch_tool.last_switch_time = time.time()
+                bpy.ops.wm.tool_set_by_id(name="builtin.cursor")
+            elif buff_last_selected_tool == '':
+                ret = {'CANCELLED'}
+                self.report({'WARNING'},
+                            ("Tool switch impossible : "
+                            "No last selected tool found"))
+            elif context.mode != VIEW3D_OT_switch_tool.last_switch_mode:
+                ret = {'CANCELLED'}
+                self.report({'WARNING'},
+                            ("Tool switch impossible : "
+                            "Context mode has changed"))
+            elif time.time() > VIEW3D_OT_switch_tool.last_switch_time \
+                    + VIEW3D_OT_switch_tool.TIMEOUT:
+                ret = {'CANCELLED'}
+                self.report({'WARNING'},
+                            "Tool switch aborted : Operation timed out")
+            else:
+                VIEW3D_OT_switch_tool.last_selected_tool = selected_tool.idname
+                VIEW3D_OT_switch_tool.last_switch_mode = context.mode
+                VIEW3D_OT_switch_tool.last_switch_time = time.time()
+                bpy.ops.wm.tool_set_by_id(name=buff_last_selected_tool)
+
+        return ret
 
 
 # ## Menus section ############################################################
@@ -308,6 +363,7 @@ def register():
 
     bpy.utils.register_class(A2C_Preferences)
     bpy.utils.register_class(VIEW3D_OT_a2c)
+    bpy.utils.register_class(VIEW3D_OT_switch_tool)
     bpy.utils.register_class(VIEW3D_MT_a2c)
     bpy.utils.register_class(VIEW3D_MT_align2custom)
     bpy.utils.register_class(VIEW3D_MT_align2cursor)
@@ -319,33 +375,38 @@ def register():
             name='3D View',
             space_type='VIEW_3D')
 
-        def set_km_item(km, numpad, ctrl, viewpoint, align_mode):
+        def set_km_item(km, key, ctrl, viewpoint, align_mode):
             global gl_addon_keymaps
 
             if km:
-                str_numpad = 'NUMPAD_{}'.format(numpad)
                 kmi = km.keymap_items.new(VIEW3D_OT_a2c.bl_idname,
-                                          str_numpad, 'PRESS',
+                                          key, 'PRESS',
                                           alt=True, ctrl=ctrl)
                 kmi.properties.prop_viewpoint = viewpoint
                 kmi.properties.prop_align_mode = align_mode
                 gl_addon_keymaps.append((km, kmi))
 
         # Shortcuts for align to custom orientation operators
-        set_km_item(km, '7', False, 'TOP', 'CUSTOM')
-        set_km_item(km, '7', True, 'BOTTOM', 'CUSTOM')
-        set_km_item(km, '1', False, 'FRONT', 'CUSTOM')
-        set_km_item(km, '1', True, 'BACK', 'CUSTOM')
-        set_km_item(km, '3', False, 'RIGHT', 'CUSTOM')
-        set_km_item(km, '3', True, 'LEFT', 'CUSTOM')
+        set_km_item(km, 'NUMPAD_7', False, 'TOP', 'CUSTOM')
+        set_km_item(km, 'NUMPAD_7', True, 'BOTTOM', 'CUSTOM')
+        set_km_item(km, 'NUMPAD_1', False, 'FRONT', 'CUSTOM')
+        set_km_item(km, 'NUMPAD_1', True, 'BACK', 'CUSTOM')
+        set_km_item(km, 'NUMPAD_3', False, 'RIGHT', 'CUSTOM')
+        set_km_item(km, 'NUMPAD_3', True, 'LEFT', 'CUSTOM')
 
         # Shortcuts for align to 3D cursor operators
-        set_km_item(km, '8', False, 'TOP', 'CURSOR')
-        set_km_item(km, '8', True, 'BOTTOM', 'CURSOR')
-        set_km_item(km, '5', False, 'FRONT', 'CURSOR')
-        set_km_item(km, '5', True, 'BACK', 'CURSOR')
-        set_km_item(km, '6', False, 'RIGHT', 'CURSOR')
-        set_km_item(km, '6', True, 'LEFT', 'CURSOR')
+        set_km_item(km, 'NUMPAD_8', False, 'TOP', 'CURSOR')
+        set_km_item(km, 'NUMPAD_8', True, 'BOTTOM', 'CURSOR')
+        set_km_item(km, 'NUMPAD_5', False, 'FRONT', 'CURSOR')
+        set_km_item(km, 'NUMPAD_5', True, 'BACK', 'CURSOR')
+        set_km_item(km, 'NUMPAD_6', False, 'RIGHT', 'CURSOR')
+        set_km_item(km, 'NUMPAD_6', True, 'LEFT', 'CURSOR')
+
+        # Shortcut for switch tool operator
+        if km:
+            kmi = km.keymap_items.new(VIEW3D_OT_switch_tool.bl_idname,
+                                      'Q', 'PRESS', alt=True)
+            gl_addon_keymaps.append((km, kmi))
 
 
 def unregister():
@@ -360,6 +421,7 @@ def unregister():
     bpy.utils.unregister_class(VIEW3D_MT_align2cursor)
     bpy.utils.unregister_class(VIEW3D_MT_align2custom)
     bpy.utils.unregister_class(VIEW3D_MT_a2c)
+    bpy.utils.unregister_class(VIEW3D_OT_switch_tool)
     bpy.utils.unregister_class(VIEW3D_OT_a2c)
     bpy.utils.unregister_class(A2C_Preferences)
 
@@ -367,4 +429,3 @@ def unregister():
 # ## MAIN test section ########################################################
 if __name__ == "__main__":
     register()
-
