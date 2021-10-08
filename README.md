@@ -16,7 +16,7 @@ If a _custom transform orientation_ has been created and is active (see how on t
 ![alt text](./doc_img/custom_orient_selection.png "Custom transform orientation selection")
 
 Moreover, these items can be accessed by keyboard shortcuts as follows :
- - Top View    : `ALT` + `NUMPAD 7`
+ - Top View    : <kbd>ALT</kbd> + `NUMPAD 7`
  - Bottom View : `ALT` + `CTRL` + `NUMPAD 7`
  - Front View  : `ALT` + `NUMPAD 1`
  - Back View   : `ALT` + `CTRL` + `NUMPAD 1`
