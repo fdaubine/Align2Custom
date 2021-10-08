@@ -16,12 +16,12 @@ If a _custom transform orientation_ has been created and is active (see how on t
 ![alt text](./doc_img/custom_orient_selection.png "Custom transform orientation selection")
 
 Moreover, these items can be accessed by keyboard shortcuts as follows :
- - Top View    : <kbd>ALT</kbd> + `NUMPAD 7`
- - Bottom View : `ALT` + `CTRL` + `NUMPAD 7`
- - Front View  : `ALT` + `NUMPAD 1`
- - Back View   : `ALT` + `CTRL` + `NUMPAD 1`
- - Right View  : `ALT` + `NUMPAD 3`
- - Left View   : `ALT` + `CTRL` + `NUMPAD 3`
+ - Top View    : <kbd>ALT</kbd> + <kbd>NUMPAD 7</kbd>
+ - Bottom View : <kbd>ALT</kbd> + <kbd>CTRL</kbd> + <kbd>NUMPAD 7</kbd>
+ - Front View  : <kbd>ALT</kbd> + <kbd>NUMPAD 1</kbd>
+ - Back View   : <kbd>ALT</kbd> + <kbd>CTRL</kbd> + <kbd>NUMPAD 1</kbd>
+ - Right View  : <kbd>ALT</kbd> + <kbd>NUMPAD 3</kbd>
+ - Left View   : <kbd>ALT</kbd> + <kbd>CTRL</kbd> + <kbd>NUMPAD 3</kbd>
 
 __Warning__ : these commands have no effect if no _custom transform orientation_ is active.
 
