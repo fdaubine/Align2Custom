@@ -215,61 +215,6 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class VIEW3D_OT_switch_tool(bpy.types.Operator):
-    """
-    Switch between current and 'Cursor' tools in the 3D View, whatever the
-    current mode
-
-    A warning message is dispayed if the last selected tool is unknown, if
-    the context mode has changed, or if the switch back to the last selected
-    tool doesn't occur before a specific timeout.
-    """
-
-    bl_idname = "view3d.switch_tool"
-    bl_label = "Swap between current and 'Cursor' tools in 3D View"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    TIMEOUT = 30.0
-    last_switch_time = 0.0
-    last_switch_mode = ''
-    last_selected_tool = ''
-
-    def execute(self, context):
-        ret = {'FINISHED'}
-        if context.space_data.type == 'VIEW_3D':
-            tools = context.workspace.tools
-            selected_tool = tools.from_space_view3d_mode(context.mode)
-            buff_last_selected_tool = VIEW3D_OT_switch_tool.last_selected_tool
-
-            if selected_tool.idname != "builtin.cursor":
-                VIEW3D_OT_switch_tool.last_selected_tool = selected_tool.idname
-                VIEW3D_OT_switch_tool.last_switch_mode = context.mode
-                VIEW3D_OT_switch_tool.last_switch_time = time.time()
-                bpy.ops.wm.tool_set_by_id(name="builtin.cursor")
-            elif buff_last_selected_tool == '':
-                ret = {'CANCELLED'}
-                self.report({'WARNING'},
-                            ("Tool switch impossible : "
-                            "No last selected tool found"))
-            elif context.mode != VIEW3D_OT_switch_tool.last_switch_mode:
-                ret = {'CANCELLED'}
-                self.report({'WARNING'},
-                            ("Tool switch impossible : "
-                            "Context mode has changed"))
-            elif time.time() > VIEW3D_OT_switch_tool.last_switch_time \
-                    + VIEW3D_OT_switch_tool.TIMEOUT:
-                ret = {'CANCELLED'}
-                self.report({'WARNING'},
-                            "Tool switch aborted : Operation timed out")
-            else:
-                VIEW3D_OT_switch_tool.last_selected_tool = selected_tool.idname
-                VIEW3D_OT_switch_tool.last_switch_mode = context.mode
-                VIEW3D_OT_switch_tool.last_switch_time = time.time()
-                bpy.ops.wm.tool_set_by_id(name=buff_last_selected_tool)
-
-        return ret
-
-
 # ## Menus section ############################################################
 class VIEW3D_MT_a2c(bpy.types.Menu):
     """
@@ -363,7 +308,6 @@ def register():
 
     bpy.utils.register_class(A2C_Preferences)
     bpy.utils.register_class(VIEW3D_OT_a2c)
-    bpy.utils.register_class(VIEW3D_OT_switch_tool)
     bpy.utils.register_class(VIEW3D_MT_a2c)
     bpy.utils.register_class(VIEW3D_MT_align2custom)
     bpy.utils.register_class(VIEW3D_MT_align2cursor)
@@ -402,12 +346,6 @@ def register():
         set_km_item(km, 'NUMPAD_6', False, 'RIGHT', 'CURSOR')
         set_km_item(km, 'NUMPAD_6', True, 'LEFT', 'CURSOR')
 
-        # Shortcut for switch tool operator
-        if km:
-            kmi = km.keymap_items.new(VIEW3D_OT_switch_tool.bl_idname,
-                                      'Q', 'PRESS', alt=True)
-            gl_addon_keymaps.append((km, kmi))
-
 
 def unregister():
     global gl_addon_keymaps
@@ -421,7 +359,6 @@ def unregister():
     bpy.utils.unregister_class(VIEW3D_MT_align2cursor)
     bpy.utils.unregister_class(VIEW3D_MT_align2custom)
     bpy.utils.unregister_class(VIEW3D_MT_a2c)
-    bpy.utils.unregister_class(VIEW3D_OT_switch_tool)
     bpy.utils.unregister_class(VIEW3D_OT_a2c)
     bpy.utils.unregister_class(A2C_Preferences)
 
