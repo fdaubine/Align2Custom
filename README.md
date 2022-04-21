@@ -12,11 +12,14 @@ This add-on bypasses these limits by offering 2 custom alignment features for th
  - alignment to a custom transform orientation
 
 <br>
+
 ## Features
 
 ### Alignment to the 3D cursor orientation
 
 This method is based on the ability of the 3D cursor to automatically align itself to the geometry of a face it is snapped to.
+
+<br>
 
 #### Prerequisites and limitations
 
@@ -28,24 +31,24 @@ First, it's necessary to allow the 3D cursor to align automatically to the geome
  - open the 3D viewport properties panel (keyboard shortcut <kbd>N</kbd>) and select the `Tool` thumbnail
  - in the `Active tool` section, change the `Orientation` parameter to __*Geometry*__
 
+<br>
+
 ![GIF showing how to configure the 3D cursor orientation parameter](./doc_img/cursor_orientation_cfg.gif "How to configure the 3D cursor orientation parameter")
 
-<details>
-<summary>__Important note__ : Each work mode has its own 3D cursor configuration. Therefore, you'll have to change the 3D cursor _Orientation_ parameter for each relevant mode (Object mode, Edit mode, Sculpt mode, ...).</summary>
-
-![GIF showing the 3D cursor orientation parameter for 2 modes](./doc_img/cursor_orientation_cfg_2_modes.gif "3D cursor orientation parameter for 2 different modes")
-</details>
-
 <br>
+
+__Important note__ : Each work mode has its own 3D cursor configuration. Therefore, you'll have to change the 3D cursor _Orientation_ parameter for each relevant mode (Object mode, Edit mode, Sculpt mode, ...).
+
+Second, since you need to switch to the 3D cursor tool to snap the cursor to a face, I strongly recommend assigning a keyboard shortcut (let's say <kbd>Q</kbd> for instance) to the 3D cursor tool, so as to speed up the workflow.
 <details>
-<summary>Second, since you need to switch to the 3D cursor tool to snap the cursor to a face, I strongly recommend assigning a keyboard shortcut (let's say <kbd>Q</kbd> for instance) to the 3D cursor tool, so as to speed up the workflow.</summary>
+<summary>Click here if you want to see how...</summary>
 
 ![GIF showing how to assign a keyboard shortcut to a tool](./doc_img/assign_kb_shortcut.gif "How to assign a keyboard shortcut to a tool")
 </details>
 
-<br>
 Finally, I encourage you to save this configuration in the startup file, so that you don't have to do it again each time you start a new project.
 
+<br>
 
 #### Workflow
 
@@ -59,15 +62,25 @@ Then, use one of the following keyboard shortcuts to align the 3D View to the 3D
  - Right View  : <kbd>ALT</kbd> + <kbd>NUMPAD 6</kbd>
  - Left View   : <kbd>ALT</kbd> + <kbd>CTRL</kbd> + <kbd>NUMPAD 6</kbd>
 
+<br>
+
 ![GIF showing the workflow to align the 3D View to the cursor orientation](./doc_img/workflow_align_2_cursor.gif "Workflow to align the 3D View to the cursor orientation")
 
+<br>
+
 Those commands are also accessible in the `View` -> `Align View` -> `Align View to Cursor` top menu of the 3D View.
+
+<br>
+
 ![Image showing the 'Align View to Cursor' menu](./doc_img/menu_align_2_cursor.png "'Align View to Cursor' menu")
 	
 <br>
+
 ### Alignment to a custom transform orientation
 
 This method is based on the Blender feature that allows to define custom transform orientations.
+
+<br>
 
 #### Preparation
 
@@ -75,8 +88,11 @@ To align the 3D View to a custom transform orientation, it must have been create
 
 My method is based on the _Normal_ transform orientation of a face or plane to define a _Custom_ transform orientation :
 
-![GIF showing how to define a custom transform orientation](./doc_img/define_custom_orientation.png "How to define a custom transform orientation")
+<br>
 
+![GIF showing how to define a custom transform orientation](./doc_img/define_custom_orientation.gif "How to define a custom transform orientation")
+
+<br>
 
 #### Workflow
 
@@ -90,27 +106,41 @@ When a _Custom_ transformation orientation is active, you can use one of the fol
 
 __Note__ : these commands have no effect if no _Custom_ transform orientation is active.
 
+<br>
+
 ![GIF showing the workflow to align the 3D View to a custom transform orientation](./doc_img/workflow_align_2_custom.gif "Workflow to align the 3D View to a custom transform orientation")
 
-Those commands are also accessible in the `View` -> `Align View` -> `Align View to Custom` top menu of the 3D View.
-![Image showing the 'Align View to Custom' menu](./doc_img/menu_align 2_custom.png "'Align View to Custom' menu")
+<br>
 
+Those commands are also accessible in the `View` -> `Align View` -> `Align View to Custom` top menu of the 3D View.
 
 <br>
+
+![Image showing the 'Align View to Custom' menu](./doc_img/menu_align_2_custom.png "'Align View to Custom' menu")
+
+<br>
+
 ## Installation
 
  - Download [Align2Custom V2.0.0](https://github.com/fdaubine/Align2Custom/releases/tag/V2.0.0) from the release section
  - Install the __*align2custom.py*__ file as a Blender add-on (`Edit` -> `Preferences...` -> `Add-ons` -> `Install...`)
  - Check the `3D View: Align view to custom orientation or 3D cursor` option in the list of add-ons
 
+<br>
+
 ![Image showing the installation instructions](./doc_img/install_align_2_custom.png "Installation instructions")
 
+<br>
+
 If you prefer hard transitions or if you're facing problems (odd behaviors, performance, ...), the add-on installation panel provides an option to disable the smooth transition during the 3D View alignment.
+
+<br>
 
 ![GIF showing the difference between hard and smooth transition](./doc_img/hard_smooth_transitions.gif "Hard vs Smooth alignment transitions")
 
 
 <br>
+
 ## Changelog
 
 ### V2.0.0
