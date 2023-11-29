@@ -122,7 +122,7 @@ Those commands are also accessible in the `View` -> `Align View` -> `Align View 
 
 ## Installation
 
- - Download [Align2Custom V2.0.0](https://github.com/fdaubine/Align2Custom/releases/tag/V2.0.0) from the release section
+ - Download [Align2Custom V2.0.1](https://github.com/fdaubine/Align2Custom/releases/tag/V2.0.1) from the release section
  - Install the __*align2custom.py*__ file as a Blender add-on (`Edit` -> `Preferences...` -> `Add-ons` -> `Install...`)
  - Check the `3D View: Align view to custom orientation or 3D cursor` option in the list of add-ons
 
@@ -142,6 +142,10 @@ If you prefer hard transitions or if you're facing problems (odd behaviors, perf
 <br>
 
 ## Changelog
+
+### V2.0.1
+
+Bug correction (Issue #3) for Blender 4.0 compatibility.
 
 ### V2.0.0
 
