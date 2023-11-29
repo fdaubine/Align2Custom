@@ -34,7 +34,7 @@ bl_info = {
     "description": "Set of commands to align the 3D view to the axes of "
                    "the active custom transform orientation or the 3D cursor.",
     "author": "Francois Daubine",
-    "version": (2, 0, 0),
+    "version": (2, 0, 1),
     "blender": (2, 80, 0),
     "location": "View3D > View > Align View",
     "warning": "",
@@ -223,7 +223,6 @@ class VIEW3D_MT_a2c(bpy.types.Menu):
 
     bl_idname = "VIEW3D_MT_a2c"
     bl_label = "Align View base class"
-    bl_options = {'REGISTER', 'UNDO'}
 
     def draw(self, context):
         self.create_items(context)
@@ -270,7 +269,6 @@ class VIEW3D_MT_align2custom(VIEW3D_MT_a2c):
 
     bl_idname = "VIEW3D_MT_align2custom"
     bl_label = "Align View to Custom"
-    bl_options = {'REGISTER', 'UNDO'}
 
     def draw(self, context):
         self.create_items(context, 'CUSTOM')
@@ -285,7 +283,6 @@ class VIEW3D_MT_align2cursor(VIEW3D_MT_a2c):
 
     bl_idname = "VIEW3D_MT_align2cursor"
     bl_label = "Align View to Cursor"
-    bl_options = {'REGISTER', 'UNDO'}
 
     def draw(self, context):
         self.create_items(context, 'CURSOR')
