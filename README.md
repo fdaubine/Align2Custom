@@ -122,15 +122,25 @@ Those commands are also accessible in the `View` -> `Align View` -> `Align View 
 
 ## Installation
 
- - Download [Align2Custom V2.0.1](https://github.com/fdaubine/Align2Custom/releases/tag/V2.0.1) from the release section
- - Install the __*align2custom.py*__ file as a Blender add-on (`Edit` -> `Preferences...` -> `Add-ons` -> `Install...`)
- - Check the `3D View: Align view to custom orientation or 3D cursor` option in the list of add-ons
+This addon can be installed in two differents ways.
 
-<br>
+### Installation from Github
 
-![Image showing the installation instructions](./doc_img/install_align_2_custom.png "Installation instructions")
+This method is recommended for Blender versions prior to 4.2 :
+ - Download ZIP file of [Align2Custom V2.1.0](https://github.com/fdaubine/Align2Custom/releases/tag/V2.1.0) from the release section
+ - Open Blender, then drag and drop the ZIP file onto Blender UI to install the add-on
+ - Check that the `Align 2 Custom` option appears in the list of add-ons (`Edit` -> `Preferences...` -> `Add-ons`)
 
-<br>
+### Installation from Blender Extensions plateform
+
+Since 4.2 version, Blender can connect to an online plateform called __Blender Extensions__ to download and install tons of add-ons. This add-on is now available on this plateform. To install it, follow these instructions :
+- Look for __Align2Custom__ add-on on [Blender Extensions](https://extensions.blender.org/)
+- Follow the [installation instructions](https://extensions.blender.org/about/)
+- In Blender, check that the `Align 2 Custom` option appears in the list of add-ons (`Edit` -> `Preferences...` -> `Add-ons`)
+
+This method is recommended for Blender 4.2 (and newer) because add-on update can be managed easily and directly from Blender UI when a new version of the add-on is published.
+
+### add-on preferences
 
 If you prefer hard transitions or if you're facing problems (odd behaviors, performance, ...), the add-on installation panel provides an option to disable the smooth transition during the 3D View alignment.
 
@@ -142,6 +152,12 @@ If you prefer hard transitions or if you're facing problems (odd behaviors, perf
 <br>
 
 ## Changelog
+
+### V2.1.0
+
+Packaging adaptation for publication on __Blender Extensions__ plateform.
+No functional evolution nor bug fixing.
+No need to update to this version if you run a Blender version prior to __4.2__.
 
 ### V2.0.1
 
