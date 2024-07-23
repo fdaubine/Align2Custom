@@ -23,6 +23,14 @@
 # Contributed to by fdaubine
 
 
+""" 
+Align2Custom package entry point 
+"""
+
+
+from . import align2custom as a2c
+
+
 bl_info = {
     "name": "Align view to custom orientation or 3D cursor",
     "description": "Set of commands to align the 3D view to the axes of "
@@ -39,15 +47,14 @@ bl_info = {
 }
 
 
-from . import align2custom as a2c
-
-
 # ## Blender registration section #############################################
 def register():
+    """ Main register function """
     a2c.register()
 
 
 def unregister():
+    """ Main unregister function """
     a2c.unregister()
 
 
