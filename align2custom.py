@@ -22,16 +22,22 @@
 
 # Contributed to by fdaubine
 
-import bpy
+
+"""
+Align2Custom module implementation
+"""
+
+
 import math
 import mathutils as mu
 import threading as thd
 import time
+import bpy
 
 
 # ## Global data ##############################################################
-gl_addon_keymaps = []       # Keymap collection
-gl_token_lock = False       # Locking token while rotating 3D View
+GL_ADDON_KEYMAPS = []       # Keymap collection
+GL_TOKEN_LOCK = False       # Locking token while rotating 3D View
 
 
 # ## Math functions section ###################################################
@@ -46,8 +52,8 @@ def s_curve(x):
     Return value : float value
     """
 
-    assert (x >= 0.0) and (x <= 1.0), ("Overflow error : argument 'x' should "
-                                       "be in the range [0, 1]")
+    assert (0.0 <= x <= 1.0), ("Overflow error : argument 'x' should "
+                               "be in the range [0, 1]")
 
     return (1.0 + math.sin((x - 0.5) * math.pi))/2.0
 
@@ -65,6 +71,7 @@ class A2C_Preferences(bpy.types.AddonPreferences):
                                         )
 
     def draw(self, context):
+        """ Display 'smooth' option in panel """
         self.layout.prop(self, "pref_smooth")
 
 
@@ -109,13 +116,13 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
         'quat_end'
         """
 
-        global gl_token_lock
+        global GL_TOKEN_LOCK
 
         if space:
             # Calculation of the rotation angle which is used to compute the
             # smooth rotation duration
             diff_quat = quat_end.rotation_difference(quat_begin)
-            axis, angle = diff_quat.to_axis_angle()
+            _, angle = diff_quat.to_axis_angle()
             duration = abs(VIEW3D_OT_a2c.SMOOTH_ROT_DURATION * angle / math.pi)
 
             start_time = time.time()
@@ -134,7 +141,7 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
 
             space.region_3d.view_rotation = quat_end
 
-        gl_token_lock = False
+        GL_TOKEN_LOCK = False
 
     def execute(self, context):
         """
@@ -146,7 +153,7 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
         preferences UI. The transition can be instantaneous or smooth.
         """
 
-        global gl_token_lock
+        global GL_TOKEN_LOCK
 
         # Get the addon preferences
         prefs = context.preferences.addons[__package__].preferences
@@ -155,7 +162,7 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
         space = context.space_data
 
         co = scene.transform_orientation_slots[0].custom_orientation
-        if (not gl_token_lock) and \
+        if (not GL_TOKEN_LOCK) and \
            (space.type == 'VIEW_3D') and \
            ((self.prop_align_mode == 'CURSOR') or co):
 
@@ -191,7 +198,7 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
                                     target=VIEW3D_OT_a2c.smooth_rotate,
                                     args=(space, initial_quat, final_quat))
 
-                gl_token_lock = True
+                GL_TOKEN_LOCK = True
                 rotation_job.start()
             else:
                 space.region_3d.view_rotation = final_quat
@@ -209,9 +216,11 @@ class VIEW3D_MT_a2c(bpy.types.Menu):
     bl_label = "Align View base class"
 
     def draw(self, context):
+        """ Display menu items """
         self.create_items(context)
 
     def create_items(self, context, align_mode='CUSTOM'):
+        """ Create menu items """
         operator_prop = self.layout.operator(VIEW3D_OT_a2c.bl_idname,
                                              text="Top")
         operator_prop.prop_viewpoint = 'TOP'
@@ -255,6 +264,7 @@ class VIEW3D_MT_align2custom(VIEW3D_MT_a2c):
     bl_label = "Align View to Custom"
 
     def draw(self, context):
+        """ Display menu items """
         self.create_items(context, 'CUSTOM')
 
 
@@ -269,6 +279,7 @@ class VIEW3D_MT_align2cursor(VIEW3D_MT_a2c):
     bl_label = "Align View to Cursor"
 
     def draw(self, context):
+        """ Display menu items """
         self.create_items(context, 'CURSOR')
 
 
@@ -285,7 +296,10 @@ def a2c_menu_func(self, context):
 
 # ## Blender registration section #############################################
 def register():
-    global gl_addon_keymaps
+    """
+    Module register function called by the main package register function
+    """
+    global GL_ADDON_KEYMAPS
 
     bpy.utils.register_class(A2C_Preferences)
     bpy.utils.register_class(VIEW3D_OT_a2c)
@@ -301,7 +315,7 @@ def register():
             space_type='VIEW_3D')
 
         def set_km_item(km, key, ctrl, viewpoint, align_mode):
-            global gl_addon_keymaps
+            global GL_ADDON_KEYMAPS
 
             if km:
                 kmi = km.keymap_items.new(VIEW3D_OT_a2c.bl_idname,
@@ -309,7 +323,7 @@ def register():
                                           alt=True, ctrl=ctrl)
                 kmi.properties.prop_viewpoint = viewpoint
                 kmi.properties.prop_align_mode = align_mode
-                gl_addon_keymaps.append((km, kmi))
+                GL_ADDON_KEYMAPS.append((km, kmi))
 
         # Shortcuts for align to custom orientation operators
         set_km_item(km, 'NUMPAD_7', False, 'TOP', 'CUSTOM')
@@ -329,11 +343,14 @@ def register():
 
 
 def unregister():
-    global gl_addon_keymaps
+    """
+    Module unregister function called by the main package register function
+    """
+    global GL_ADDON_KEYMAPS
 
-    for km, kmi in gl_addon_keymaps:
+    for km, kmi in GL_ADDON_KEYMAPS:
         km.keymap_items.remove(kmi)
-    gl_addon_keymaps.clear()
+    GL_ADDON_KEYMAPS.clear()
 
     bpy.types.VIEW3D_MT_view_align.remove(a2c_menu_func)
 
