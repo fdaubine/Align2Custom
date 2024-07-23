@@ -3,7 +3,7 @@ schema_version = "1.0.0"
 # Example of manifest file for a Blender extension
 # Change the values according to your extension
 id = "align2custom"
-version = "2.0.1"
+version = "2.1.0"
 name = "Align 2 Custom"
 tagline = "Align 3D View to custom orientation or 3D cursor"
 maintainer = "Francois Daubine <fdaubine.dev@gmail.com>"
