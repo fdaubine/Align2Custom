@@ -29,22 +29,6 @@ import threading as thd
 import time
 
 
-bl_info = {
-    "name": "Align view to custom orientation or 3D cursor",
-    "description": "Set of commands to align the 3D view to the axes of "
-                   "the active custom transform orientation or the 3D cursor.",
-    "author": "Francois Daubine",
-    "version": (2, 0, 1),
-    "blender": (2, 80, 0),
-    "location": "View3D > View > Align View",
-    "warning": "",
-    "doc_url": "https://www.github.com/fdaubine/Align2Custom",
-    "tracker_url": "https://www.github.com/fdaubine/Align2Custom",
-    "support": "COMMUNITY",
-    "category": "3D View",
-}
-
-
 # ## Global data ##############################################################
 gl_addon_keymaps = []       # Keymap collection
 gl_token_lock = False       # Locking token while rotating 3D View
@@ -74,7 +58,7 @@ class A2C_Preferences(bpy.types.AddonPreferences):
     Addon panel of the 'Preferences...' interface
     """
 
-    bl_idname = __name__
+    bl_idname = __package__
 
     pref_smooth: bpy.props.BoolProperty(name="Smooth rotation",
                                         default=True,
@@ -165,7 +149,7 @@ class VIEW3D_OT_a2c(bpy.types.Operator):
         global gl_token_lock
 
         # Get the addon preferences
-        prefs = context.preferences.addons[__name__].preferences
+        prefs = context.preferences.addons[__package__].preferences
 
         scene = context.window.scene
         space = context.space_data
