@@ -131,14 +131,14 @@ This method is recommended for Blender versions prior to 4.2 :
  - Open Blender, then drag and drop the ZIP file onto Blender UI to install the add-on
  - Check that the `Align 2 Custom` option appears in the list of add-ons (`Edit` -> `Preferences...` -> `Add-ons`)
 
-### Installation from Blender Extensions plateform
+### Installation from Blender Extensions platform
 
-Since 4.2 version, Blender can connect to an online plateform called __Blender Extensions__ to download and install tons of add-ons. This add-on is now available on this plateform. To install it, follow these instructions :
+Since 4.2 version, Blender can connect to an online platform called __Blender Extensions__ to download and install tons of add-ons. This add-on is now available on this platform. To install it, follow these instructions :
 - Look for __Align2Custom__ add-on on [Blender Extensions](https://extensions.blender.org/)
 - Follow the [installation instructions](https://extensions.blender.org/about/)
 - In Blender, check that the `Align 2 Custom` option appears in the list of add-ons (`Edit` -> `Preferences...` -> `Add-ons`)
 
-This method is recommended for Blender 4.2 (and newer) because add-on update can be managed easily and directly from Blender UI when a new version of the add-on is published.
+This method is recommended for Blender 4.2 (and newer) because add-on update can be managed easily and directly from Blender UI whenever a new version of the add-on is published.
 
 ### add-on preferences
 
@@ -155,7 +155,7 @@ If you prefer hard transitions or if you're facing problems (odd behaviors, perf
 
 ### V2.1.0
 
-Packaging adaptation for publication on __Blender Extensions__ plateform.
+Packaging optimization for publication on __Blender Extensions__ platform.
 No functional evolution nor bug fixing.
 No need to update to this version if you run a Blender version prior to __4.2__.
 
